@@ -39,8 +39,25 @@ packages
 
 ## Prerequisites
 
-1. Install packages:
-   - `yarn install`
+1. Make sure you run node.js v14.x.x (newer node versions might not work properly). You can manage node versions with, for example, [nvm](https://github.com/nvm-sh/nvm).
+2. Copy `.env.example` to `.env` inside your workspace to satisfy hardhat when running _yarn install_ in the next step. You can fill in your own env var values for at a later point in time.
+3. Install packages via
+
+```
+yarn install
+```
+
+4. When you want to commit changes you need to install lerna globally
+
+```
+yarn global add lerna
+```
+
+as well as prepare husky as pre-commit action
+
+```
+yarn prepare
+```
 
 ## Getting started with development
 
@@ -68,7 +85,7 @@ This will deploy all contracts and create 3 elections with pre-registered benefi
 > yarn hardhat elections:refreshElectionState --term 1 --network localhost
 > ```
 
-3. copy `.env.example` to `.env` and update it with the contract addresses output in the previous command.
+3. Now update your `.env` file with the contract addresses output in the previous command.
 
 ## Getting started with Frontend
 
@@ -116,12 +133,12 @@ Deploy from `packages/contracts`:
 
 ## Useful Hardhat Commands
 
-| Command                                                                    | Description                      |
-| -------------------------------------------------------------------------- | -------------------------------- |
-| `yarn hardhat dev:deploy`                              | deploy contracts for development |
-| `yarn hardhat elections:refreshElectionState --term 1 --network localhost` | refresh election state           |
-| `yarn hardhat elections:getElectionMetadata --term 1 --network localhost`  | get metadata for election term   |
-| `yarn lerna run --scope @popcorn/contracts docify` | generate documentation for contracts (found in packages/contracts/docgen/docs)|
+| Command                                                                    | Description                                                                    |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `yarn hardhat dev:deploy`                                                  | deploy contracts for development                                               |
+| `yarn hardhat elections:refreshElectionState --term 1 --network localhost` | refresh election state                                                         |
+| `yarn hardhat elections:getElectionMetadata --term 1 --network localhost`  | get metadata for election term                                                 |
+| `yarn lerna run --scope @popcorn/contracts docify`                         | generate documentation for contracts (found in packages/contracts/docgen/docs) |
 
 ## Contributing
 
