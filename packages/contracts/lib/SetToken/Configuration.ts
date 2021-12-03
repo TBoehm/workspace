@@ -1,7 +1,8 @@
-import { BigNumber, BigNumberish } from "ethers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumberish } from "@setprotocol/set-protocol-v2/node_modules/ethers";
+import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ZERO } from './utils/constants';
+import { ZERO } from "./utils/constants";
 
 export interface Configuration {
   targetNAV: BigNumber;
@@ -12,10 +13,10 @@ export interface Configuration {
     };
     modules: {
       BasicIssuanceModule?: {
-        address: string,
+        address: string;
         config?: {
           preIssueHook?: string;
-        }
+        };
       };
       StreamingFeeModule: {
         address: string;
@@ -24,8 +25,8 @@ export interface Configuration {
           maxStreamingFeePercentage: BigNumberish;
           streamingFeePercentage: BigNumberish;
           lastStreamingFeeTimestamp: BigNumberish;
-        }
-      }
+        };
+      };
     };
   };
   components: {
@@ -51,9 +52,9 @@ export const DefaultConfiguration: Configuration = {
         address: process.env.ADDR_SET_STREAMING_FEE_MODULE,
         config: {
           feeRecipient: process.env.ADDR_SET_STREAMING_FEE_MODULE_FEE_RECIPIENT,
-          maxStreamingFeePercentage: parseEther('.03'),
-          streamingFeePercentage: parseEther('.01'),
-          lastStreamingFeeTimestamp: ZERO,
+          maxStreamingFeePercentage: parseEther(".03") as BigNumberish,
+          streamingFeePercentage: parseEther(".01") as BigNumberish,
+          lastStreamingFeeTimestamp: ZERO as BigNumberish,
         },
       },
     },

@@ -1,5 +1,5 @@
-import "@nomiclabs/hardhat-waffle";
 import "@float-capital/solidity-coverage";
+import "@nomiclabs/hardhat-waffle";
 import "@popcorn/utils/src/envLoader";
 import "@typechain/hardhat";
 import { utils } from "ethers";
@@ -7,12 +7,12 @@ import { parseEther } from "ethers/lib/utils";
 import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
 import { task } from "hardhat/config";
+import { GrantElectionAdapter } from "./adapters/GrantElection/GrantElectionAdapter";
 import { DefaultConfiguration } from "./lib/SetToken/Configuration";
 import SetTokenManager from "./lib/SetToken/SetTokenManager";
 import deploy from "./scripts/deployWithValues";
 import deployTestnet from "./scripts/deployWithValuesTestnet";
 import finalizeElection from "./scripts/finalizeElection";
-import { GrantElectionAdapter } from "./adapters/GrantElection/GrantElectionAdapter";
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -200,7 +200,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.7.3",
+        version: "0.8.0",
         settings: {
           optimizer: {
             enabled: true,
@@ -209,7 +209,7 @@ module.exports = {
         },
       },
       {
-        version: "0.6.6",
+        version: "0.7.0",
         settings: {
           optimizer: {
             enabled: true,
@@ -219,6 +219,15 @@ module.exports = {
       },
       {
         version: "0.6.12",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+          },
+        },
+      },
+      {
+        version: "0.6.6",
         settings: {
           optimizer: {
             enabled: true,

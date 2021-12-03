@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./KeeperIncentive.sol";
 import "../interfaces/IRegion.sol";
@@ -23,7 +23,6 @@ import "../interfaces/IContractRegistry.sol";
  * @notice Manages distribution of POP rewards to Popcorn Treasury, DAO Staking, and Beneficiaries
  */
 contract RewardsManager is IRewardsManager, ReentrancyGuard {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   enum RewardTargets {
@@ -111,7 +110,7 @@ contract RewardsManager is IRewardsManager, ReentrancyGuard {
       _minAmountOut,
       _path,
       address(this),
-      block.timestamp.add(SWAP_TIMEOUT)
+      block.timestamp + SWAP_TIMEOUT
     );
     emit TokenSwapped(_path[0], _amounts[0], _amounts[1]);
 
@@ -131,18 +130,14 @@ contract RewardsManager is IRewardsManager, ReentrancyGuard {
     require(availableReward > 0, "No POP balance");
 
     //@todo check edge case precision overflow
-    uint256 stakingAmount = availableReward
-      .mul(rewardSplits[uint8(RewardTargets.Staking)])
-      .div(100e18);
-    uint256 treasuryAmount = availableReward
-      .mul(rewardSplits[uint8(RewardTargets.Treasury)])
-      .div(100e18);
-    uint256 insuranceAmount = availableReward
-      .mul(rewardSplits[uint8(RewardTargets.Insurance)])
-      .div(100e18);
-    uint256 beneficiaryVaultsAmount = availableReward
-      .mul(rewardSplits[uint8(RewardTargets.BeneficiaryVaults)])
-      .div(100e18);
+    uint256 stakingAmount = (availableReward *
+      rewardSplits[uint8(RewardTargets.Staking)]) / 100e18;
+    uint256 treasuryAmount = (availableReward *
+      rewardSplits[uint8(RewardTargets.Treasury)]) / 100e18;
+    uint256 insuranceAmount = (availableReward *
+      rewardSplits[uint8(RewardTargets.Insurance)]) / 100e18;
+    uint256 beneficiaryVaultsAmount = (availableReward *
+      rewardSplits[uint8(RewardTargets.BeneficiaryVaults)]) / 100e18;
 
     _distributeToStaking(stakingAmount);
     _distributeToTreasury(treasuryAmount);
@@ -193,7 +188,7 @@ contract RewardsManager is IRewardsManager, ReentrancyGuard {
     address[] memory regionVaults = IRegion(
       contractRegistry.getContract(keccak256("Region"))
     ).getAllVaults();
-    uint256 split = _amount.div(regionVaults.length);
+    uint256 split = _amount / regionVaults.length;
     for (uint256 i; i < regionVaults.length; i++) {
       POP.transfer(regionVaults[i], split);
     }
@@ -216,7 +211,7 @@ contract RewardsManager is IRewardsManager, ReentrancyGuard {
         _splits[i] >= rewardLimits[i][0] && _splits[i] <= rewardLimits[i][1],
         "Invalid split"
       );
-      total = total.add(_splits[i]);
+      total = total + _splits[i];
     }
     require(total == 100e18, "Invalid split total");
     rewardSplits = _splits;

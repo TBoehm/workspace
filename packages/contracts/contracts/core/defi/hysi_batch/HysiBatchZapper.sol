@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {BatchType, Batch, IHysiBatchInteraction} from "../../interfaces/IHysiBatchInteraction.sol";
 import "../../../externals/interfaces/Curve3Pool.sol";
 import "../../interfaces/IContractRegistry.sol";
@@ -14,7 +14,6 @@ This Contract allows user to use and receive stablecoins directly when interacti
 This contract mainly takes stablecoins swaps them into 3CRV and deposits them or the other way around.
  */
 contract HysiBatchZapper {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   /* ========== STATE VARIABLES ========== */
@@ -207,7 +206,7 @@ contract HysiBatchZapper {
     If a user sends Stables to this contract by accident (Which cant be retrieved anyway) they will be used aswell.
     */
     uint256 stableBalance = IERC20(curve3Pool.coins(_stableCoinIndex))
-    .balanceOf(address(this));
+      .balanceOf(address(this));
 
     //Transfer stables to user
     IERC20(curve3Pool.coins(_stableCoinIndex)).safeTransfer(

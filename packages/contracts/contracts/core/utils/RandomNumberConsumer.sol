@@ -3,12 +3,9 @@
 pragma solidity ^0.7.0;
 
 import "@chainlink/contracts/src/v0.7/dev/VRFConsumerBase.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../interfaces/IRandomNumberConsumer.sol";
 
 contract RandomNumberConsumer is VRFConsumerBase {
-  using SafeMath for uint256;
-
   /* ========== STATE VARIABLES ========== */
 
   address public VRFCoordinator;
@@ -70,7 +67,7 @@ contract RandomNumberConsumer is VRFConsumerBase {
     override
   {
     //randomResult should not be 0
-    _randomness = _randomness.add(1);
+    _randomness = _randomness + 1;
     randomResult[requestToElection[_requestId]] = _randomness;
   }
 }

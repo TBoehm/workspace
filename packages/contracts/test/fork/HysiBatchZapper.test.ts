@@ -1,17 +1,18 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import BasicIssuanceModuleAbi from "@setprotocol/set-protocol-v2/artifacts/contracts/protocol/modules/BasicIssuanceModule.sol/BasicIssuanceModule.json";
+import SetTokenAbi from "@setprotocol/set-protocol-v2/artifacts/contracts/protocol/SetToken.sol/SetToken.json";
+import {
+  BasicIssuanceModule,
+  SetToken,
+} from "@setprotocol/set-protocol-v2/dist/typechain";
 import { expect } from "chai";
-import { utils } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { ethers, network, waffle } from "hardhat";
 import HysiBatchInteractionAdapter, {
   ComponentMap,
 } from "../../adapters/HYSIBatchInteraction/HYSIBatchInteractionAdapter";
 import CurveMetapoolAbi from "../../lib/Curve/CurveMetapoolAbi.json";
-import BasicIssuanceModuleAbi from "../../lib/SetToken/vendor/set-protocol/artifacts/BasicIssuanceModule.json";
-import SetTokenAbi from "../../lib/SetToken/vendor/set-protocol/artifacts/SetToken.json";
-import { BasicIssuanceModule } from "../../lib/SetToken/vendor/set-protocol/types/BasicIssuanceModule";
-import { SetToken } from "../../lib/SetToken/vendor/set-protocol/types/SetToken";
 import {
   ACLRegistry,
   ContractRegistry,
@@ -137,35 +138,44 @@ async function deployContracts(): Promise<Contracts> {
       await ethers.getContractFactory("MockERC20")
     ).deploy("POP", "POP", 18)
   ).deployed();
-  const dai = (await ethers.getContractAt("ERC20", DAI_ADDRESS)) as ERC20;
+  const dai = (await ethers.getContractAt(
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
+    DAI_ADDRESS
+  )) as ERC20;
 
-  const usdc = (await ethers.getContractAt("ERC20", USDC_ADDRESS)) as ERC20;
+  const usdc = (await ethers.getContractAt(
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
+    USDC_ADDRESS
+  )) as ERC20;
 
-  const usdt = (await ethers.getContractAt("ERC20", USDT_ADDRESS)) as ERC20;
+  const usdt = (await ethers.getContractAt(
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
+    USDT_ADDRESS
+  )) as ERC20;
 
   //Deploy Curve Token
   const threeCrv = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     THREE_CRV_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvDUSD = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_DUSD_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvFRAX = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_FRAX_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvUSDN = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_USDN_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvUST = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_UST_TOKEN_ADDRESS
   )) as ERC20;
 

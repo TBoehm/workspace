@@ -682,11 +682,13 @@ describe("GrantElections", function () {
       const metadata = await GrantElectionAdapter(
         contracts.grantElections
       ).getElectionMetadata(GRANT_TERM.MONTH);
-      expect(metadata["votes"][0]).to.deep.eq({
+      expect(metadata["votes"][0]).to.deep.contain({
         voter: owner.address,
         beneficiary: beneficiary.address,
-        weight: BigNumber.from(Math.round(Math.sqrt(5))),
       });
+      expect(metadata["votes"][0].weight).to.equal(
+        BigNumber.from(Math.round(Math.sqrt(5)))
+      );
     });
 
     it("should not allow to vote twice for same address and grant term", async function () {

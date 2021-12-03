@@ -1,8 +1,8 @@
 import { MockContract } from "@ethereum-waffle/mock-contract";
-import { BigNumber } from "@ethersproject/bignumber";
-import { parseEther } from "@ethersproject/units";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
+import { parseEther } from "ethers/lib/utils";
 import { ethers, waffle } from "hardhat";
 import { generateClaims, makeElement, merklize } from "../scripts/merkle";
 import {

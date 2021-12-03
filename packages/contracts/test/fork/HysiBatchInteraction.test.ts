@@ -1,4 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import BasicIssuanceModuleAbi from "@setprotocol/set-protocol-v2/artifacts/contracts/protocol/modules/BasicIssuanceModule.sol/BasicIssuanceModule.json";
+import SetTokenAbi from "@setprotocol/set-protocol-v2/artifacts/contracts/protocol/SetToken.sol/SetToken.json";
+import {
+  BasicIssuanceModule,
+  SetToken,
+} from "@setprotocol/set-protocol-v2/dist/typechain";
 import bluebird from "bluebird";
 import { expect } from "chai";
 import { BigNumber, utils } from "ethers";
@@ -8,10 +14,6 @@ import HysiBatchInteractionAdapter, {
   ComponentMap,
 } from "../../adapters/HYSIBatchInteraction/HYSIBatchInteractionAdapter";
 import CurveMetapoolAbi from "../../lib/Curve/CurveMetapoolAbi.json";
-import BasicIssuanceModuleAbi from "../../lib/SetToken/vendor/set-protocol/artifacts/BasicIssuanceModule.json";
-import SetTokenAbi from "../../lib/SetToken/vendor/set-protocol/artifacts/SetToken.json";
-import { BasicIssuanceModule } from "../../lib/SetToken/vendor/set-protocol/types/BasicIssuanceModule";
-import { SetToken } from "../../lib/SetToken/vendor/set-protocol/types/SetToken";
 import {
   ACLRegistry,
   ContractRegistry,
@@ -138,27 +140,27 @@ async function deployContracts(): Promise<Contracts> {
 
   //Deploy Curve Token
   const threeCrv = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     THREE_CRV_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvDUSD = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_DUSD_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvFRAX = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_FRAX_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvUSDN = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_USDN_TOKEN_ADDRESS
   )) as ERC20;
 
   const crvUST = (await ethers.getContractAt(
-    "ERC20",
+    "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20",
     CRV_UST_TOKEN_ADDRESS
   )) as ERC20;
 
@@ -335,7 +337,7 @@ const getMinAmountOfHYSIToMint = async (): Promise<BigNumber> => {
   const componentAddresses = components[0];
   const componentAmounts = components[1];
 
-  const componentVirtualPrices = await Promise.all(
+  const componentVirtualPrices = (await Promise.all(
     componentAddresses.map(async (component) => {
       const metapool = componentMap[component.toLowerCase()]
         .metaPool as CurveMetapool;
@@ -345,7 +347,7 @@ const getMinAmountOfHYSIToMint = async (): Promise<BigNumber> => {
       const metapoolPrice = await metapool.get_virtual_price();
       return yPoolPricePerShare.mul(metapoolPrice).div(parseEther("1"));
     })
-  );
+  )) as BigNumber[];
 
   const componentValuesInUSD = componentVirtualPrices.reduce(
     (sum, componentPrice, i) => {
@@ -394,13 +396,13 @@ const getMinAmountOf3CrvToReceive = async (
   );
 
   const componentValuesInUSD = componentVirtualPrices.reduce(
-    (sum, componentPrice, i) => {
+    (sum: BigNumber, componentPrice: BigNumber, i) => {
       return sum.add(
         componentPrice.mul(componentAmounts[i]).div(parseEther("1"))
       );
     },
     parseEther("0")
-  );
+  ) as BigNumber;
 
   // 50 bps slippage tolerance
   const slippageTolerance = 1 - Number(slippage);

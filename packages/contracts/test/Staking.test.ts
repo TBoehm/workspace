@@ -1,6 +1,6 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
@@ -44,15 +44,15 @@ describe("Staking", function () {
     ).deployed();
 
     contractRegistry = await (
-      await (
-        await ethers.getContractFactory("ContractRegistry")
-      ).deploy(aclRegistry.address)
+      await (await ethers.getContractFactory("ContractRegistry")).deploy(
+        aclRegistry.address
+      )
     ).deployed();
 
     rewardsEscrow = (await (
-      await (
-        await ethers.getContractFactory("RewardsEscrow")
-      ).deploy(contractRegistry.address)
+      await (await ethers.getContractFactory("RewardsEscrow")).deploy(
+        contractRegistry.address
+      )
     ).deployed()) as RewardsEscrow;
 
     const stakingFactory = await ethers.getContractFactory("Staking");

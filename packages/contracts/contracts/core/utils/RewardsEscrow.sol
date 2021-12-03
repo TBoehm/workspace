@@ -1,16 +1,15 @@
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../interfaces/IStaking.sol";
 import "../interfaces/IRewardsEscrow.sol";
 import "../interfaces/IContractRegistry.sol";
 import "../interfaces/IACLRegistry.sol";
 
 contract RewardsEscrow is IRewardsEscrow, ReentrancyGuard {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   /* ========== STATE VARIABLES ========== */
@@ -85,8 +84,8 @@ contract RewardsEscrow is IRewardsEscrow, ReentrancyGuard {
     require(POP.balanceOf(msg.sender) >= _amount, "insufficient balance");
 
     uint256 currentTime = block.timestamp;
-    uint256 start = currentTime.add(vestingCliff);
-    uint256 end = start.add(escrowDuration);
+    uint256 start = currentTime + vestingCliff;
+    uint256 end = start + escrowDuration;
     bytes32 id = keccak256(abi.encodePacked(_account, _amount, currentTime));
 
     escrows[id] = Escrow({
@@ -132,7 +131,7 @@ contract RewardsEscrow is IRewardsEscrow, ReentrancyGuard {
     uint256 total;
 
     for (uint256 i = 0; i < _escrowIds.length; i++) {
-      total = total.add(_claimReward(msg.sender, _escrowIds[i]));
+      total = total + _claimReward(msg.sender, _escrowIds[i]);
     }
     require(total > 0, "no rewards");
 
@@ -182,6 +181,7 @@ contract RewardsEscrow is IRewardsEscrow, ReentrancyGuard {
 
   function _getClaimableAmount(Escrow memory _escrow)
     internal
+    view
     returns (uint256)
   {
     if (_escrow.start == 0 || _escrow.end == 0) {
@@ -189,9 +189,8 @@ contract RewardsEscrow is IRewardsEscrow, ReentrancyGuard {
     }
     return
       Math.min(
-        (_escrow.balance.mul(block.timestamp.sub(_escrow.start))).div(
-          _escrow.end.sub(_escrow.start)
-        ),
+        (_escrow.balance * (block.timestamp - _escrow.start)) /
+          (_escrow.end - _escrow.start),
         _escrow.balance
       );
   }

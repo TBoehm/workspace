@@ -1,14 +1,12 @@
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IACLRegistry.sol";
 import "../interfaces/IContractRegistry.sol";
 
 contract ParticipationReward is ReentrancyGuard {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   /* ========== STATE VARIABLES ========== */
@@ -129,9 +127,8 @@ contract ParticipationReward is ReentrancyGuard {
     require(vaults[_vaultId].endTime == 0, "Vault must not exist");
     require(_endTime > block.timestamp, "end must be in the future");
 
-    uint256 expectedVaultBudget = totalVaultsBudget.add(
-      rewardBudgets[_contractName]
-    );
+    uint256 expectedVaultBudget = totalVaultsBudget +
+      rewardBudgets[_contractName];
     if (expectedVaultBudget > rewardBalance || rewardBalance == 0) {
       return (false, "");
     }
@@ -189,7 +186,7 @@ contract ParticipationReward is ReentrancyGuard {
       vaults[_vaultId].status == VaultStatus.Init,
       "Vault must be initialized"
     );
-    vaults[_vaultId].shares = vaults[_vaultId].shares.add(_shares);
+    vaults[_vaultId].shares = vaults[_vaultId].shares + _shares;
     vaults[_vaultId].shareBalances[_account] = _shares;
 
     userVaults[_account].push(_vaultId);
@@ -212,8 +209,8 @@ contract ParticipationReward is ReentrancyGuard {
     require(reward > 0, "no rewards");
     require(reward <= rewardBalance, "not enough funds for payout");
 
-    totalVaultsBudget = totalVaultsBudget.sub(reward);
-    rewardBalance = rewardBalance.sub(reward);
+    totalVaultsBudget = totalVaultsBudget - reward;
+    rewardBalance = rewardBalance - reward;
 
     IERC20(contractRegistry.getContract(keccak256("POP"))).safeTransfer(
       msg.sender,
@@ -240,15 +237,15 @@ contract ParticipationReward is ReentrancyGuard {
         vaults[vaultId].status == VaultStatus.Open &&
         !vaults[vaultId].claimed[msg.sender]
       ) {
-        total = total.add(_claimVaultReward(vaultId, _indices[i], msg.sender));
+        total = total + _claimVaultReward(vaultId, _indices[i], msg.sender);
       }
     }
 
     require(total > 0, "no rewards");
     require(total <= rewardBalance, "not enough funds for payout");
 
-    totalVaultsBudget = totalVaultsBudget.sub(total);
-    rewardBalance = rewardBalance.sub(total);
+    totalVaultsBudget = totalVaultsBudget - total;
+    rewardBalance = rewardBalance - total;
 
     IERC20(contractRegistry.getContract(keccak256("POP"))).safeTransfer(
       msg.sender,
@@ -272,10 +269,9 @@ contract ParticipationReward is ReentrancyGuard {
   ) internal returns (uint256) {
     uint256 userShares = vaults[_vaultId].shareBalances[_account];
     if (userShares > 0) {
-      uint256 reward = vaults[_vaultId].tokenBalance.mul(userShares).div(
-        vaults[_vaultId].shares
-      );
-      vaults[_vaultId].tokenBalance = vaults[_vaultId].tokenBalance.sub(reward);
+      uint256 reward = (vaults[_vaultId].tokenBalance * userShares) /
+        vaults[_vaultId].shares;
+      vaults[_vaultId].tokenBalance = vaults[_vaultId].tokenBalance - reward;
       vaults[_vaultId].claimed[_account] = true;
 
       delete userVaults[_account][_index];
@@ -346,7 +342,7 @@ contract ParticipationReward is ReentrancyGuard {
       address(this),
       _amount
     );
-    rewardBalance = rewardBalance.add(_amount);
+    rewardBalance = rewardBalance + _amount;
     emit RewardBalanceIncreased(msg.sender, _amount);
   }
 

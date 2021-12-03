@@ -1,13 +1,12 @@
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./MockERC20.sol";
 
 contract MockBasicIssuanceModule {
   using SafeERC20 for MockERC20;
-  using SafeMath for uint256;
 
   address[] public underlying;
   uint256[] public quantities;
@@ -26,7 +25,7 @@ contract MockBasicIssuanceModule {
     address _to
   ) external {
     for (uint256 i; i < underlying.length; i++) {
-      uint256 amount = _quantity.mul(quantities[i]);
+      uint256 amount = _quantity * quantities[i];
       require(
         MockERC20(underlying[i]).balanceOf(msg.sender) >= amount,
         "not enough underlying token"
@@ -45,7 +44,7 @@ contract MockBasicIssuanceModule {
     require(MockERC20(_setToken).balanceOf(msg.sender) >= _quantity);
     MockERC20(_setToken).transferFrom(msg.sender, address(this), _quantity);
     for (uint256 i; i < underlying.length; i++) {
-      uint256 amount = _quantity.mul(quantities[i]);
+      uint256 amount = _quantity * quantities[i];
       MockERC20(underlying[i]).approve(address(this), amount);
       MockERC20(underlying[i]).transfer(_to, amount);
     }
@@ -59,7 +58,7 @@ contract MockBasicIssuanceModule {
     uint256[] memory notionalUnits = new uint256[](underlying.length);
 
     for (uint256 i = 0; i < underlying.length; i++) {
-      notionalUnits[i] = _quantity.mul(quantities[i]);
+      notionalUnits[i] = _quantity * quantities[i];
     }
 
     return (underlying, notionalUnits);

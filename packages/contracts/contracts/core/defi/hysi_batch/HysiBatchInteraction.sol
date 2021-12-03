@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../../interfaces/IACLRegistry.sol";
 import "../../../externals/interfaces/YearnVault.sol";
 import "../../../externals/interfaces/BasicIssuanceModule.sol";
@@ -24,7 +24,6 @@ This means 12 approvals and 9 deposits are necessary to mint one HYSI.
 We Batch this process and allow users to pool their funds. Than we pay keeper to Mint or Redeem HYSI regularly.
 */
 contract HysiBatchInteraction {
-  using SafeMath for uint256;
   using SafeERC20 for YearnVault;
   using SafeERC20 for ISetToken;
   using SafeERC20 for IERC20;
@@ -219,13 +218,11 @@ contract HysiBatchInteraction {
     );
 
     //At this point the share balance is equal to the supplied token and can be used interchangeably
-    accountBalances[_batchId][_withdrawFor] = accountBalance.sub(
-      _amountToWithdraw
-    );
-    batch.suppliedTokenBalance = batch.suppliedTokenBalance.sub(
-      _amountToWithdraw
-    );
-    batch.unclaimedShares = batch.unclaimedShares.sub(_amountToWithdraw);
+    accountBalances[_batchId][_withdrawFor] =
+      accountBalance -
+      _amountToWithdraw;
+    batch.suppliedTokenBalance = batch.suppliedTokenBalance - _amountToWithdraw;
+    batch.unclaimedShares = batch.unclaimedShares - _amountToWithdraw;
 
     if (batch.batchType == BatchType.Mint) {
       threeCrv.safeTransfer(recipient, _amountToWithdraw);
@@ -255,16 +252,14 @@ contract HysiBatchInteraction {
     );
 
     //Calculate how many token will be claimed
-    uint256 tokenAmountToClaim = batch
-      .claimableTokenBalance
-      .mul(accountBalance)
-      .div(batch.unclaimedShares);
+    uint256 tokenAmountToClaim = (batch.claimableTokenBalance *
+      accountBalance) / batch.unclaimedShares;
 
     //Subtract the claimed token from the batch
-    batch.claimableTokenBalance = batch.claimableTokenBalance.sub(
-      tokenAmountToClaim
-    );
-    batch.unclaimedShares = batch.unclaimedShares.sub(accountBalance);
+    batch.claimableTokenBalance =
+      batch.claimableTokenBalance -
+      tokenAmountToClaim;
+    batch.unclaimedShares = batch.unclaimedShares - accountBalance;
     accountBalances[_batchId][_claimFor] = 0;
 
     //Transfer token
@@ -310,19 +305,15 @@ contract HysiBatchInteraction {
       require(batch.batchType == _batchType, "incorrect batchType");
       require(accountBalance >= _shares[i], "account has insufficient funds");
 
-      uint256 tokenAmountToClaim = batch
-        .claimableTokenBalance
-        .mul(_shares[i])
-        .div(batch.unclaimedShares);
-      batch.claimableTokenBalance = batch.claimableTokenBalance.sub(
-        tokenAmountToClaim
-      );
-      batch.unclaimedShares = batch.unclaimedShares.sub(_shares[i]);
-      accountBalances[batch.batchId][msg.sender] = accountBalance.sub(
-        _shares[i]
-      );
+      uint256 tokenAmountToClaim = (batch.claimableTokenBalance * _shares[i]) /
+        batch.unclaimedShares;
+      batch.claimableTokenBalance =
+        batch.claimableTokenBalance -
+        tokenAmountToClaim;
+      batch.unclaimedShares = batch.unclaimedShares - _shares[i];
+      accountBalances[batch.batchId][msg.sender] = accountBalance - _shares[i];
 
-      totalAmount = totalAmount.add(tokenAmountToClaim);
+      totalAmount = totalAmount + tokenAmountToClaim;
     }
     require(totalAmount > 0, "totalAmount must be larger 0");
 
@@ -358,7 +349,7 @@ contract HysiBatchInteraction {
     //...or if enough 3CRV was deposited to make the minting worthwhile
     //This is to prevent excessive gas consumption and costs as we will pay keeper to call this function
     require(
-      (block.timestamp.sub(lastMintedAt) >= batchCooldown) ||
+      (block.timestamp - lastMintedAt) >= batchCooldown ||
         (batch.suppliedTokenBalance >= mintThreshold),
       "can not execute batch action yet"
     );
@@ -392,38 +383,35 @@ contract HysiBatchInteraction {
       uint256 yTokenInCrvToken = YearnVault(tokenAddresses[i]).pricePerShare();
 
       //Check how many 3CRV are needed to mint one crvLPToken
-      uint256 crvLPTokenIn3Crv = uint256(2e18).sub(
+      uint256 crvLPTokenIn3Crv = uint256(2e18) -
         curvePoolTokenPairs[tokenAddresses[i]]
           .curveMetaPool
-          .calc_withdraw_one_coin(1e18, 1)
-      );
+          .calc_withdraw_one_coin(1e18, 1);
 
       //Calculate how many 3CRV are needed to mint one yToken
-      uint256 yTokenIn3Crv = yTokenInCrvToken.mul(crvLPTokenIn3Crv).div(1e18);
+      uint256 yTokenIn3Crv = (yTokenInCrvToken * crvLPTokenIn3Crv) / 1e18;
 
       //Calculate how much the yToken leftover are worth in 3CRV
-      uint256 leftoverIn3Crv = YearnVault(tokenAddresses[i])
-        .balanceOf(address(this))
-        .mul(yTokenIn3Crv)
-        .div(1e18);
+      uint256 leftoverIn3Crv = (YearnVault(tokenAddresses[i]).balanceOf(
+        address(this)
+      ) * yTokenIn3Crv) / 1e18;
 
       //Add the leftover value to the array of leftovers for later use
       leftoversIn3Crv[i] = leftoverIn3Crv;
 
       //Add the leftover value to the total leftover value
-      totalLeftoverIn3Crv = totalLeftoverIn3Crv.add(leftoverIn3Crv);
+      totalLeftoverIn3Crv = totalLeftoverIn3Crv + leftoverIn3Crv;
     }
 
     //Calculate the total value of supplied token + leftovers in 3CRV
-    uint256 suppliedTokenBalancePlusLeftovers = batch.suppliedTokenBalance.add(
-      totalLeftoverIn3Crv
-    );
+    uint256 suppliedTokenBalancePlusLeftovers = batch.suppliedTokenBalance +
+      totalLeftoverIn3Crv;
 
     for (uint256 i; i < tokenAddresses.length; i++) {
       //Calculate the pool allocation by dividing the suppliedTokenBalance by 4 and take leftovers into account
-      uint256 poolAllocation = suppliedTokenBalancePlusLeftovers.div(4).sub(
-        leftoversIn3Crv[i]
-      );
+      uint256 poolAllocation = suppliedTokenBalancePlusLeftovers /
+        4 -
+        leftoversIn3Crv[i];
 
       //Pool 3CRV to get crvLPToken
       _sendToCurve(
@@ -448,17 +436,15 @@ contract HysiBatchInteraction {
     }
 
     //Get the minimum amount of hysi that we can mint with our balances of yToken
-    uint256 hysiAmount = YearnVault(tokenAddresses[0])
-      .balanceOf(address(this))
-      .mul(1e18)
-      .div(quantities[0]);
+    uint256 hysiAmount = (YearnVault(tokenAddresses[0]).balanceOf(
+      address(this)
+    ) * 1e18) / quantities[0];
 
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
       hysiAmount = Math.min(
         hysiAmount,
-        YearnVault(tokenAddresses[i]).balanceOf(address(this)).mul(1e18).div(
+        (YearnVault(tokenAddresses[i]).balanceOf(address(this)) * 1e18) /
           quantities[i]
-        )
       );
     }
 
@@ -502,7 +488,7 @@ contract HysiBatchInteraction {
     //...or if enough HYSI was deposited to make the redemption worthwhile
     //This is to prevent excessive gas consumption and costs as we will pay keeper to call this function
     require(
-      (block.timestamp.sub(lastRedeemedAt) >= batchCooldown) ||
+      (block.timestamp - lastRedeemedAt >= batchCooldown) ||
         (batch.suppliedTokenBalance >= redeemThreshold),
       "can not execute batch action yet"
     );
@@ -560,9 +546,9 @@ contract HysiBatchInteraction {
     }
 
     //Save the redeemed amount of 3CRV as claimable token for the batch
-    batch.claimableTokenBalance = threeCrv.balanceOf(address(this)).sub(
-      oldBalance
-    );
+    batch.claimableTokenBalance =
+      threeCrv.balanceOf(address(this)) -
+      oldBalance;
 
     require(
       batch.claimableTokenBalance >= _min3crvToReceive,
@@ -658,11 +644,11 @@ contract HysiBatchInteraction {
     Batch storage batch = batches[_currentBatchId];
 
     //Add the new funds to the batch
-    batch.suppliedTokenBalance = batch.suppliedTokenBalance.add(_amount);
-    batch.unclaimedShares = batch.unclaimedShares.add(_amount);
-    accountBalances[_currentBatchId][_depositFor] = accountBalances[
-      _currentBatchId
-    ][_depositFor].add(_amount);
+    batch.suppliedTokenBalance = batch.suppliedTokenBalance + _amount;
+    batch.unclaimedShares = batch.unclaimedShares + _amount;
+    accountBalances[_currentBatchId][_depositFor] =
+      accountBalances[_currentBatchId][_depositFor] +
+      _amount;
 
     //Save the batchId for the user so they can be retrieved to claim the batch
     accountBatches[_depositFor].push(_currentBatchId);
@@ -684,7 +670,7 @@ contract HysiBatchInteraction {
       address(_curveMetapool)
     );
     threeCrv.safeDecreaseAllowance(address(_curveMetapool), allowanceAmount);
-    threeCrv.safeIncreaseAllowance(address(_curveMetapool), uint256(-1));
+    threeCrv.safeIncreaseAllowance(address(_curveMetapool), type(uint256).max);
 
     //Takes 3CRV and sends lpToken to this contract
     //Metapools take an array of amounts with the exoctic stablecoin at the first spot and 3CRV at the second.
@@ -708,7 +694,7 @@ contract HysiBatchInteraction {
       address(_curveMetapool)
     );
     _lpToken.safeDecreaseAllowance(address(_curveMetapool), allowanceAmount);
-    _lpToken.safeIncreaseAllowance(address(_curveMetapool), uint256(-1));
+    _lpToken.safeIncreaseAllowance(address(_curveMetapool), type(uint256).max);
 
     //Takes lp Token and sends 3CRV to this contract
     //The second variable is the index for the token we want to receive (0 = exotic stablecoin, 1 = 3CRV)
@@ -732,7 +718,7 @@ contract HysiBatchInteraction {
       address(_yearnVault)
     );
     _crvLPToken.safeDecreaseAllowance(address(_yearnVault), allowanceAmount);
-    _crvLPToken.safeIncreaseAllowance(address(_yearnVault), uint256(-1));
+    _crvLPToken.safeIncreaseAllowance(address(_yearnVault), type(uint256).max);
 
     //Mints yToken and sends them to msg.sender (this contract)
     _yearnVault.deposit(_amount);
@@ -751,7 +737,7 @@ contract HysiBatchInteraction {
       address(_yearnVault)
     );
     _yearnVault.safeDecreaseAllowance(address(_yearnVault), allowanceAmount);
-    _yearnVault.safeIncreaseAllowance(address(_yearnVault), uint256(-1));
+    _yearnVault.safeIncreaseAllowance(address(_yearnVault), type(uint256).max);
 
     //Takes yToken and sends crvLPToken to this contract
     _yearnVault.withdraw(_amount);

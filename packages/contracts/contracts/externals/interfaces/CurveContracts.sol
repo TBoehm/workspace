@@ -1,6 +1,7 @@
-pragma solidity >=0.6.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface CurveAddressProvider {
   function get_registry() external view returns (address);
@@ -39,4 +40,5 @@ interface CurveMetapool {
 }
 
 interface ThreeCrv is IERC20 {}
+
 interface CrvLPToken is IERC20 {}

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
 import "./MockERC20.sol";
 
@@ -67,7 +68,7 @@ contract MockCurveThreepool {
     uint256 slippage = (_token_amount * withdrawalSlippageBps) / 10000;
     uint256 transferOut = _token_amount - slippage;
 
-    uint256 idx = uint256(i);
+    uint128 idx = uint128(i);
     tokens[idx].approve(address(this), transferOut);
     tokens[idx].mint(address(this), transferOut);
     tokens[idx].transferFrom(address(this), msg.sender, transferOut);

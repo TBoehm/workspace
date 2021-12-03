@@ -1,13 +1,9 @@
 pragma solidity ^0.7.0;
 
 import "@chainlink/contracts/src/v0.7/dev/VRFConsumerBase.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-
 import "../core/interfaces/IRandomNumberConsumer.sol";
 
 contract RandomNumberHelper is IRandomNumberConsumer, VRFConsumerBase {
-  using SafeMath for uint256;
-
   address public VRFCoordinator;
   // rinkeby: 0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B
   address public LinkToken;
@@ -47,7 +43,7 @@ contract RandomNumberHelper is IRandomNumberConsumer, VRFConsumerBase {
     override
   {
     //randomResult should not be 0
-    randomResult = randomness.add(1);
+    randomResult = randomness + 1;
   }
 
   function mockFulfillRandomness(uint256 randomness) external {

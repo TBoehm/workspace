@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+// Docgen-SOLC: 0.8.0
+pragma solidity >=0.6.12;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../../../externals/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import {VaultAPI, BaseWrapper} from "yearn-protocol/contracts/BaseWrapper.sol";
+import {VaultAPI, BaseWrapper} from "../../../externals/yearn/BaseWrapper.sol";
 
 contract AffiliateToken is ERC20, BaseWrapper {
+  using SafeMath for uint256;
+
   /// @notice The EIP-712 typehash for the contract's domain
   bytes32 public constant DOMAIN_TYPEHASH =
     keccak256(

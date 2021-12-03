@@ -2,6 +2,10 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Contract } from "@ethersproject/contracts";
 import { Web3Provider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
+import {
+  BasicIssuanceModule,
+  SetToken,
+} from "@setprotocol/set-protocol-v2/dist/typechain";
 
 export enum BatchType {
   Mint,
@@ -77,8 +81,8 @@ class HysiBatchInteractionAdapter {
     slippage: number = 0.005,
     contracts: {
       hysiBatchInteraction: Contract;
-      basicIssuanceModule: Contract;
-      setToken: Contract;
+      basicIssuanceModule: BasicIssuanceModule;
+      setToken: SetToken;
     },
     componentMap: ComponentMap
   ): Promise<BigNumber> {
@@ -96,7 +100,7 @@ class HysiBatchInteractionAdapter {
     const componentAddresses = components[0];
     const componentAmounts = components[1];
 
-    const componentVirtualPrices = await Promise.all(
+    const componentVirtualPrices = (await Promise.all(
       componentAddresses.map(async (component) => {
         const metapool = componentMap[component.toLowerCase()]
           .metaPool as Contract;
@@ -105,7 +109,7 @@ class HysiBatchInteractionAdapter {
         const metapoolPrice = await metapool.get_virtual_price();
         return yPoolPricePerShare.mul(metapoolPrice).div(parseEther("1"));
       })
-    );
+    )) as BigNumber[];
 
     const componentValuesInUSD = componentVirtualPrices.reduce(
       (sum: BigNumber, componentPrice: BigNumber, i) => {

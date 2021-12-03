@@ -14,7 +14,6 @@
     "test": "yarn hardhat test test/*.test.ts",
     "test:fork": "yarn hardhat test test/fork/*.test.ts",
     "coverage": "yarn hardhat coverage --testfiles 'test/*.test.ts'",
-    "postinstall": "yarn compile",
     "prettify": "yarn lint-staged --allow-empty"
   },
   "lint-staged": {
@@ -23,6 +22,7 @@
   "devDependencies": {
     "@float-capital/solidity-coverage": "^0.7.17",
     "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@openzeppelin/contracts": "^4.3.2",
     "@openzeppelin/test-helpers": "^0.5.13",
     "@types/chai": "^4.2.16",
     "@types/mocha": "^8.2.2",
@@ -32,12 +32,11 @@
     "rimraf": "^3.0.2"
   },
   "dependencies": {
-    "@anthonymartin/solidity-docgen": "0.5.13",
     "@chainlink/contracts": "^0.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "^3.4.0",
     "@popcorn/utils": "*",
     "@setprotocol/set-protocol-v2": "^0.0.45",
+    "@soptq/solidity-docgen": "^0.5.17",
     "@typechain/ethers-v5": "^7.0.0",
     "@typechain/hardhat": "^2.0.0",
     "@uniswap/sdk": "^3.0.3",
@@ -47,14 +46,16 @@
     "chai": "^4.3.0",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.2.2",
-    "ethers": "^5.4.1",
+    "ethers": "^5.4.6",
     "hardhat": "^2.4.3",
     "merkle-tree-solidity": "^1.0.8",
     "mocha": "^8.4.0",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.5",
-    "solc-0.7.6": "npm:solc@0.7.6",
     "solc-0.6.12": "npm:solc@0.6.12",
+    "solc-0.7.0": "npm:solc@0.7.0",
+    "solc-0.7.6": "npm:solc@0.7.6",
+    "solc-0.8.0": "npm:solc@0.8.0",
     "solidity-coverage": "^0.7.6",
     "surya": "^0.4.2",
     "ts-generator": "^0.1.1",

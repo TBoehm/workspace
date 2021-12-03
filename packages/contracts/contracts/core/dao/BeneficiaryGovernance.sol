@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IRegion.sol";
 import "../interfaces/IStaking.sol";
 import "../interfaces/IBeneficiaryRegistry.sol";
@@ -17,7 +17,6 @@ import "../utils/ParticipationReward.sol";
  * @notice This contract is for submitting beneficiary nomination proposals and beneficiary takedown proposals
  */
 contract BeneficiaryGovernance {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   /**
@@ -242,7 +241,7 @@ contract BeneficiaryGovernance {
     ).initializeVault(
         contractName,
         keccak256(abi.encodePacked(proposalId, block.timestamp)),
-        block.timestamp.add(DefaultConfigurations.votingPeriod)
+        block.timestamp + DefaultConfigurations.votingPeriod
       );
     if (vaultCreated) {
       proposal.vaultId = vaultId;
@@ -286,18 +285,18 @@ contract BeneficiaryGovernance {
     uint256 _voiceCredits = getVoiceCredits(msg.sender);
 
     proposal.voters[msg.sender] = true;
-    proposal.voterCount = proposal.voterCount.add(1);
+    proposal.voterCount = proposal.voterCount + 1;
 
     if (_vote == VoteOption.Yes) {
       require(
         proposal.status == ProposalStatus.New,
         "Initial voting period has already finished!"
       );
-      proposal.yesCount = proposal.yesCount.add(_voiceCredits);
+      proposal.yesCount = proposal.yesCount + _voiceCredits;
     }
 
     if (_vote == VoteOption.No) {
-      proposal.noCount = proposal.noCount.add(_voiceCredits);
+      proposal.noCount = proposal.noCount + _voiceCredits;
     }
 
     if (proposal.vaultId != "") {
@@ -454,8 +453,8 @@ contract BeneficiaryGovernance {
     uint256 totalVotingPeriod = votingPeriod + vetoPeriod;
 
     if (
-      block.timestamp >= _proposal.startTime.add(votingPeriod) &&
-      block.timestamp < _proposal.startTime.add(totalVotingPeriod)
+      block.timestamp >= _proposal.startTime + votingPeriod &&
+      block.timestamp < _proposal.startTime + totalVotingPeriod
     ) {
       if (_proposal.status != ProposalStatus.ChallengePeriod) {
         if (_proposal.yesCount < _proposal.noCount) {
@@ -468,7 +467,7 @@ contract BeneficiaryGovernance {
       }
     }
 
-    if (block.timestamp >= _proposal.startTime.add(totalVotingPeriod)) {
+    if (block.timestamp >= _proposal.startTime + totalVotingPeriod) {
       _proposal.status = ProposalStatus.PendingFinalization;
     }
   }

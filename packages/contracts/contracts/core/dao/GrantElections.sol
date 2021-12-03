@@ -1,8 +1,8 @@
-pragma solidity >=0.7.0 <=0.8.3;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IStaking.sol";
 import "../interfaces/IBeneficiaryRegistry.sol";
 import "../interfaces/IBeneficiaryVaults.sol";
@@ -13,7 +13,6 @@ import "../utils/ParticipationReward.sol";
 import "../interfaces/IContractRegistry.sol";
 
 contract GrantElections {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   struct Vote {
@@ -198,7 +197,7 @@ contract GrantElections {
           "election not yet finalized"
         );
         require(
-          block.timestamp.sub(latestElection.startTime) >=
+          block.timestamp - latestElection.startTime >=
             latestElection.electionConfiguration.cooldownPeriod,
           "can't start new election, not enough time elapsed since last election"
         );
@@ -224,9 +223,9 @@ contract GrantElections {
     ).initializeVault(
         contractName,
         keccak256(abi.encodePacked(term, block.timestamp)),
-        block.timestamp.add(electionDefaults[term].registrationPeriod).add(
+        block.timestamp +
+          electionDefaults[term].registrationPeriod +
           electionDefaults[term].votingPeriod
-        )
       );
     if (vaultCreated) {
       election.vaultId = vaultId;
@@ -279,10 +278,9 @@ contract GrantElections {
     Election storage election = elections[_electionId];
     if (
       block.timestamp >=
-      election
-        .startTime
-        .add(election.electionConfiguration.registrationPeriod)
-        .add(election.electionConfiguration.votingPeriod)
+      election.startTime +
+        election.electionConfiguration.registrationPeriod +
+        election.electionConfiguration.votingPeriod
     ) {
       election.electionState = ElectionState.Closed;
       if (election.electionConfiguration.useChainLinkVRF) {
@@ -297,7 +295,7 @@ contract GrantElections {
       }
     } else if (
       block.timestamp >=
-      election.startTime.add(election.electionConfiguration.registrationPeriod)
+      election.startTime + election.electionConfiguration.registrationPeriod
     ) {
       election.electionState = ElectionState.Voting;
     } else if (block.timestamp >= election.startTime) {
@@ -339,7 +337,7 @@ contract GrantElections {
         "ineligible beneficiary"
       );
 
-      usedVoiceCredits = usedVoiceCredits.add(_voiceCredits[i]);
+      usedVoiceCredits = usedVoiceCredits + _voiceCredits[i];
       uint256 sqredVoiceCredits = sqrt(_voiceCredits[i]);
 
       Vote memory _vote = Vote({
@@ -367,7 +365,7 @@ contract GrantElections {
     IERC20 POP = IERC20(contractRegistry.getContract(keccak256("POP")));
     require(POP.balanceOf(msg.sender) >= _amount, "not enough pop");
     POP.safeTransferFrom(msg.sender, address(this), _amount);
-    incentiveBudget = incentiveBudget.add(_amount);
+    incentiveBudget = incentiveBudget + _amount;
   }
 
   function getRandomNumber(uint256 _electionId) public {
@@ -419,7 +417,7 @@ contract GrantElections {
       IERC20 POP = IERC20(contractRegistry.getContract(keccak256("POP")));
       POP.approve(address(this), finalizationIncentive);
       POP.safeTransferFrom(address(this), msg.sender, finalizationIncentive);
-      incentiveBudget = incentiveBudget.sub(finalizationIncentive);
+      incentiveBudget = incentiveBudget - finalizationIncentive;
     }
 
     election.merkleRoot = _merkleRoot;

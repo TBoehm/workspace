@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.7.0 <0.8.0;
+// Docgen-SOLC: 0.8.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IStaking.sol";
 import "../interfaces/IRewardsManager.sol";
 import "../interfaces/IRewardsEscrow.sol";
@@ -13,7 +13,6 @@ import "../interfaces/IACLRegistry.sol";
 import "../interfaces/IContractRegistry.sol";
 
 contract Staking is IStaking, ReentrancyGuard {
-  using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
   struct LockedBalance {
@@ -71,10 +70,8 @@ contract Staking is IStaking, ReentrancyGuard {
       return 0;
     }
 
-    uint256 timeTillEnd = ((lockEndTime.sub(currentTime)).div(1 hours)).mul(
-      1 hours
-    );
-    return balance.mul(timeTillEnd).div(4 * 365 days);
+    uint256 timeTillEnd = ((lockEndTime - currentTime) / 1 hours) * 1 hours;
+    return (balance * timeTillEnd) / (4 * 365 days);
   }
 
   function getWithdrawableBalance(address _address)
@@ -108,26 +105,21 @@ contract Staking is IStaking, ReentrancyGuard {
       return rewardPerTokenStored;
     }
     return
-      rewardPerTokenStored.add(
-        lastTimeRewardApplicable()
-          .sub(lastUpdateTime)
-          .mul(rewardRate)
-          .mul(1e18)
-          .div(totalLocked)
-      );
+      rewardPerTokenStored +
+      (((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18) /
+        totalLocked);
   }
 
   function earned(address _account) public view returns (uint256) {
     return
-      lockedBalances[_account]
-        .balance
-        .mul(rewardPerToken().sub(userRewardPerTokenPaid[_account]))
-        .div(1e18)
-        .add(rewards[_account]);
+      (lockedBalances[_account].balance *
+        (rewardPerToken() - userRewardPerTokenPaid[_account])) /
+      1e18 +
+      rewards[_account];
   }
 
   function getRewardForDuration() external view returns (uint256) {
-    return rewardRate.mul(rewardsDuration);
+    return rewardRate * rewardsDuration;
   }
 
   /* ========== MUTATIVE FUNCTIONS ========== */
@@ -152,7 +144,7 @@ contract Staking is IStaking, ReentrancyGuard {
 
     POP.safeTransferFrom(msg.sender, address(this), _amount);
 
-    totalLocked = totalLocked.add(_amount);
+    totalLocked = totalLocked + _amount;
     _lockTokens(_amount, _lengthOfTime);
     recalculateVoiceCredits(msg.sender);
     emit StakingDeposited(msg.sender, _amount);
@@ -169,9 +161,9 @@ contract Staking is IStaking, ReentrancyGuard {
       lockedBalances[msg.sender].end > block.timestamp,
       "withdraw balance first"
     );
-    lockedBalances[msg.sender].end = lockedBalances[msg.sender].end.add(
-      _lengthOfTime
-    );
+    lockedBalances[msg.sender].end =
+      lockedBalances[msg.sender].end +
+      _lengthOfTime;
     recalculateVoiceCredits(msg.sender);
   }
 
@@ -185,10 +177,10 @@ contract Staking is IStaking, ReentrancyGuard {
       "withdraw balance first"
     );
     POP.safeTransferFrom(msg.sender, address(this), _amount);
-    totalLocked = totalLocked.add(_amount);
-    lockedBalances[msg.sender].balance = lockedBalances[msg.sender].balance.add(
-      _amount
-    );
+    totalLocked = totalLocked + _amount;
+    lockedBalances[msg.sender].balance =
+      lockedBalances[msg.sender].balance +
+      _amount;
     recalculateVoiceCredits(msg.sender);
   }
 
@@ -207,7 +199,7 @@ contract Staking is IStaking, ReentrancyGuard {
       _amount
     );
 
-    totalLocked = totalLocked.sub(_amount);
+    totalLocked = totalLocked - _amount;
     _clearWithdrawnFromLocked(_amount);
     recalculateVoiceCredits(msg.sender);
     emit StakingWithdrawn(msg.sender, _amount);
@@ -218,8 +210,8 @@ contract Staking is IStaking, ReentrancyGuard {
     if (reward > 0) {
       rewards[msg.sender] = 0;
       //How to handle missing gwei?
-      uint256 payout = reward.div(uint256(3));
-      uint256 escrowed = payout.mul(uint256(2));
+      uint256 payout = reward / uint256(3);
+      uint256 escrowed = payout * uint256(2);
 
       IERC20 POP = IERC20(contractRegistry.getContract(keccak256("POP")));
       address rewardsEscrow = contractRegistry.getContract(
@@ -244,22 +236,22 @@ contract Staking is IStaking, ReentrancyGuard {
   // todo: multiply voice credits by 10000 to deal with exponent math- is it needed?
   function recalculateVoiceCredits(address _address) public {
     uint256 previousVoiceCredits = voiceCredits[_address];
-    totalVoiceCredits = totalVoiceCredits.sub(previousVoiceCredits);
+    totalVoiceCredits = totalVoiceCredits - previousVoiceCredits;
     voiceCredits[_address] = getVoiceCredits(_address);
-    totalVoiceCredits = totalVoiceCredits.add(voiceCredits[_address]);
+    totalVoiceCredits = totalVoiceCredits + voiceCredits[_address];
   }
 
   function _lockTokens(uint256 _amount, uint256 _lengthOfTime) internal {
     uint256 currentTime = block.timestamp;
     if (currentTime > lockedBalances[msg.sender].end) {
       lockedBalances[msg.sender] = LockedBalance({
-        balance: lockedBalances[msg.sender].balance.add(_amount),
-        end: currentTime.add(_lengthOfTime)
+        balance: lockedBalances[msg.sender].balance + _amount,
+        end: currentTime + _lengthOfTime
       });
     } else {
       lockedBalances[msg.sender] = LockedBalance({
-        balance: lockedBalances[msg.sender].balance.add(_amount),
-        end: lockedBalances[msg.sender].end.add(_lengthOfTime)
+        balance: lockedBalances[msg.sender].balance + _amount,
+        end: lockedBalances[msg.sender].end + _lengthOfTime
       });
     }
   }
@@ -269,9 +261,9 @@ contract Staking is IStaking, ReentrancyGuard {
       if (_amount == lockedBalances[msg.sender].balance) {
         delete lockedBalances[msg.sender];
       } else {
-        lockedBalances[msg.sender].balance = lockedBalances[msg.sender]
-          .balance
-          .sub(_amount);
+        lockedBalances[msg.sender].balance =
+          lockedBalances[msg.sender].balance -
+          _amount;
       }
     }
   }
@@ -288,11 +280,11 @@ contract Staking is IStaking, ReentrancyGuard {
       "Not allowed"
     );
     if (block.timestamp >= periodFinish) {
-      rewardRate = _reward.div(rewardsDuration);
+      rewardRate = _reward / rewardsDuration;
     } else {
-      uint256 remaining = periodFinish.sub(block.timestamp);
-      uint256 leftover = remaining.mul(rewardRate);
-      rewardRate = _reward.add(leftover).div(rewardsDuration);
+      uint256 remaining = periodFinish - block.timestamp;
+      uint256 leftover = remaining * rewardRate;
+      rewardRate = (_reward + leftover) / rewardsDuration;
     }
 
     // Ensure the provided reward amount is not more than the balance in the contract.
@@ -302,12 +294,12 @@ contract Staking is IStaking, ReentrancyGuard {
     uint256 balance = IERC20(contractRegistry.getContract(keccak256("POP")))
       .balanceOf(address(this));
     require(
-      rewardRate <= balance.div(rewardsDuration),
+      rewardRate <= (balance / rewardsDuration),
       "Provided reward too high"
     );
 
     lastUpdateTime = block.timestamp;
-    periodFinish = block.timestamp.add(rewardsDuration);
+    periodFinish = block.timestamp + rewardsDuration;
     emit RewardAdded(_reward);
   }
 
